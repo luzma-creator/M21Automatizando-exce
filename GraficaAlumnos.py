@@ -1,52 +1,59 @@
-# Este programa lee un archivo Excel con las calificaciones de los alumnos en varias materias
-# y genera una gráfica de barras para cada alumno, asegurándose de que las etiquetas en el eje X
-# no se encimen.
-
-import pandas as pd  # Para manejar los datos del archivo Excel
-import matplotlib.pyplot as plt  # Para crear las gráficas
-import matplotlib.ticker as ticker  # Para ajustar el formato de las etiquetas del eje X
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # Leer el archivo Excel
 archivo_excel = 'calificaciones_alumnos.xlsx'
 df = pd.read_excel(archivo_excel, engine='openpyxl')
 
-# Rellenar valores NaN con 0 o cualquier otro valor adecuado
+# Mostrar las primeras filas del DataFrame para revisar su estructura
+print("Primeras filas del DataFrame:")
+print(df.head())
+
+# Rellenar valores faltantes con 0
 df.fillna(0, inplace=True)
 
-# Convertir todas las etiquetas del eje X a cadenas de texto
+# Asegurarse de que las etiquetas (materias) sean palabras
 df.columns = df.columns.astype(str)
 
-# Configuración del tamaño de la figura
-plt.figure(figsize=(12, 8))
+# Mostrar las columnas del DataFrame para revisar los nombres y la posición
+print("\nNombres de las columnas:")
+print(df.columns)
 
-# Recorrer cada fila del DataFrame (cada alumno)
-for index, row in df.iterrows():
-    nombre = row['Nombre']
-    calificaciones = row[1:]  # Seleccionar todas las columnas de calificaciones
+# Identificar las columnas de calificaciones automáticamente
+# Se asume que las columnas de calificaciones tienen nombres que contienen la palabra 'Mat' o que empiezan después de las columnas como 'Nombre'
+calificaciones = df.loc[:, df.columns.str.contains('Mat')]
 
-    # Crear una gráfica de barras para cada alumno
-    plt.bar(calificaciones.index.astype(str), calificaciones.values, label=nombre)
+# Mostrar las primeras filas de las calificaciones seleccionadas para revisar
+print("\nPrimeras filas de las calificaciones seleccionadas:")
+print(calificaciones.head())
 
-# Configurar el formato de las etiquetas del eje X para evitar que se encimen
-plt.xticks(rotation=45, ha='right')
+# Verificar si hay columnas seleccionadas correctamente
+if calificaciones.empty:
+    print("\nNo se encontraron columnas de calificaciones con los criterios dados.")
+else:
+    # Calcular el promedio de calificaciones para cada materia
+    promedios = calificaciones.mean()
 
-# Configurar un intervalo en las etiquetas del eje X para evitar la superposición
-ax = plt.gca()
-ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=15))
+    # Mostrar los promedios calculados
+    print("\nPromedios de calificaciones por materia:")
+    print(promedios)
 
-# Agregar título y etiquetas
-plt.title('Calificaciones de Alumnos')
-plt.xlabel('Materias')
-plt.ylabel('Calificaciones')
+    # Configuración del tamaño de la figura
+    plt.figure(figsize=(12, 8))
 
-# Agregar leyenda fuera de la gráfica
-plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+    # Crear la gráfica de barras horizontal con los promedios
+    plt.barh(promedios.index, promedios.values)
 
-# Ajustar el diseño para que todo se vea bien
-plt.tight_layout()
+    # Configurar las etiquetas del eje X y Y
+    plt.xlabel('Promedio de Calificaciones')
+    plt.ylabel('Materias')
 
-# Guardar la gráfica como una imagen
-plt.savefig('calificaciones_alumnos.png')
+    # Agregar título
+    plt.title('Promedio de Calificaciones por Materia')
 
-# Mostrar la gráfica
-plt.show()
+    # Ajustar el diseño
+    plt.tight_layout()
+
+    # Guardar y mostrar la gráfica
+    plt.savefig('promedio_calificaciones_materias.png')
+    plt.show()
